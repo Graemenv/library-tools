@@ -193,24 +193,21 @@ if uploaded_file is not None:
             papers = readxls(uploaded_file)
 
         @st.cache_data(ttl=3600)
-        def get_minmax(extype):
+        def get_counts(extype):
             extype = extype
-            MIN = int(papers['Year'].min())
-            MAX = int(papers['Year'].max())
-            MIN1 = int(papers['Cited by'].min())
-            MAX1 = int(papers['Cited by'].max())
-            GAP = MAX - MIN
+            year_count = int(papers['Year'].count())
+            citation_count = int(papers['Cited by'].min())
             unique_stitle = set()
             unique_stitle.update(papers['Source title'].dropna())
             list_stitle = sorted(list(unique_stitle))
-            return papers, MIN, MAX, GAP, MIN1, MAX1, list_stitle
+            return papers, year_count, citation_count, list_stitle
 
         tab1, tab2 = st.tabs(["📈 Generate visualization", "📓 Recommended Reading"])
         
         with tab1:    
             #===sunburst===
             try:
-                papers, MIN, MAX, GAP, MIN1, MAX1, list_stitle = get_minmax(extype)
+                papers, year_count, citation_count = get_counts(extype)
             except KeyError:
                 st.error('Error: Please check again your columns.')
                 sys.exit(1)
@@ -245,7 +242,7 @@ if uploaded_file is not None:
                 return years, papers
             
             @st.cache_data(ttl=3600)
-            def vis_sunburst(extype):
+            def vis_histogram(extype):
                 data = papers.copy()
                 data['Cited by'] = data['Cited by'].fillna(0)
 
@@ -260,10 +257,14 @@ if uploaded_file is not None:
                 viz=vis.groupby(['doctype', 'source', 'year'])['citby'].agg(['sum','count']).reset_index()  
                 viz.rename(columns={'sum': 'cited by', 'count': 'total docs'}, inplace=True)
         
-                fig = px.sunburst(viz, path=['doctype', 'source', 'year'], values='total docs',
-                              color='cited by', 
-                              color_continuous_scale='RdBu',
-                              color_continuous_midpoint=np.average(viz['cited by'], weights=viz['total docs']))
+                fig = alt.Chart(viz).mark_bar().encode(
+                    x=alt.X('year:O', title='Year', bin=True),
+                    y=alt.Y('cited by:Q', title='Total Cited By Count'),
+                    color=alt.Color('doctype:N', title='Document Type'),
+                    tooltip=['source:N', 'cited by:Q', 'total docs:Q']
+                ).properties(
+                    title='Cited By Count of Documents by Year and Document Type'
+                )
                 fig.update_layout(height=800, width=1200)
                 return fig, viz
             
@@ -273,7 +274,7 @@ if uploaded_file is not None:
             if {'Document Type','Source title','Cited by','Year'}.issubset(papers.columns):
               
                 if st.button("Submit", on_click = reset_all):
-                    fig, viz = vis_sunburst(extype)
+                    fig, viz = vis_histogram(extype)
                     st.plotly_chart(fig, height=800, width=1200)
                     st.dataframe(viz)
                
@@ -282,7 +283,6 @@ if uploaded_file is not None:
         
         with tab2:
             st.markdown('**numpy.average — NumPy v1.24 Manual. (n.d.). Numpy.Average — NumPy v1.24 Manual.** https://numpy.org/doc/stable/reference/generated/numpy.average.html')
-            st.markdown('**Sunburst. (n.d.). Sunburst Charts in Python.** https://plotly.com/python/sunburst-charts/')
             
     except:
         st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
