@@ -44,6 +44,7 @@ with st.expander("Before you start", expanded = True):
             st.write("The histogram will allow you to see the frequencies of specific variables in your document, such as citations, years, or specific words.")
         with tab2:
             st.text("1. Put your CSV file.")
+            #more steps?
 
             
         with tab3:
@@ -86,7 +87,6 @@ st.subheader('Put your file here...', anchor=False)
 def reset_all():
     st.cache_data.clear()
 
-#===check type===
 @st.cache_data(ttl=3600)
 def get_ext(extype):
     extype = uploaded_file.name
@@ -192,44 +192,36 @@ if uploaded_file is not None:
         elif extype.endswith(('.xls', '.xlsx')):
             papers = readxls(uploaded_file)
 
-        @st.cache_data(ttl=3600)
-        def get_counts(extype):
+        def get_minmax(extype):
             extype = extype
-            year_count = int(papers['Year'].count())
-            citation_count = int(papers['Cited by'].min())
+            MIN = int(papers['Year'].min())
+            MAX = int(papers['Year'].max())
+            MIN1 = int(papers['Cited by'].min())
+            MAX1 = int(papers['Cited by'].max())
             unique_stitle = set()
             unique_stitle.update(papers['Source title'].dropna())
             list_stitle = sorted(list(unique_stitle))
-            return papers, year_count, citation_count, list_stitle
-
-        tab1, tab2 = st.tabs(["📈 Generate visualization", "📓 Recommended Reading"])
+            return papers, MIN, MAX, MIN1, MAX1, list_stitle
         
-        with tab1:    
-            #===sunburst===
+        tab1, tab2 = st.tabs(["📈 Generate visualization", "📓 Recommended Reading"])
+
+        with tab1:
             try:
-                papers, year_count, citation_count = get_counts(extype)
+                papers, MIN, MAX, MIN1, MAX1, list_stitle = get_minmax(extype)
             except KeyError:
                 st.error('Error: Please check again your columns.')
                 sys.exit(1)
 
             stitle = st.selectbox('Focus on', (list_stitle), index=None, on_change=reset_all)
-            
-            if (GAP != 0):
-                col1, col2 = st.columns(2)
-                YEAR = col1.slider('Year', min_value=MIN, max_value=MAX, value=(MIN, MAX))
-                KEYLIM = col2.slider('Cited By Count',min_value = MIN1, max_value = MAX1, value = (MIN1,MAX1))
-                with st.expander("Filtering settings"):
-                    invert_keys = st.toggle("Invert keys")
-                    filtered_keys = st.text_input("Filter words in source, seperate with semicolon (;)", value = "\n", on_change=None) 
-                    select_col = st.selectbox("Column to filter from", (list(papers)))
-                keylist = filtered_keys.split(";")
-                
-            else:
-                col1.write('You only have data in ', (MAX))
-                YEAR = (MIN, MAX)
-                KEYLIM = col2.slider('Cited By Count',min_value = MIN1, max_value = MAX1, value = (MIN1,MAX1))
-                
-            @st.cache_data(ttl=3600)
+            col1, col2 = st.columns(2)
+            YEAR = col1.slider('Year', min_value=MIN, max_value=MAX, value=(MIN, MAX))
+            KEYLIM = col2.slider('Cited By Count',min_value = MIN1, max_value = MAX1, value = (MIN1,MAX1))
+            with st.expander("Filtering settings"):
+                invert_keys = st.toggle("Invert keys")
+                filtered_keys = st.text_input("Filter words in source, seperate with semicolon (;)", value = "\n", on_change=None) 
+                select_col = st.selectbox("Column to filter from", (list(papers)))
+            keylist = filtered_keys.split(";")
+
             def listyear(extype):
                 global papers
                 years = list(range(YEAR[0],YEAR[1]+1))
@@ -241,49 +233,29 @@ if uploaded_file is not None:
                 papers['Cited by'] = papers['Cited by'].fillna(0)
                 return years, papers
             
-            @st.cache_data(ttl=3600)
-            def vis_histogram(extype):
-                data = papers.copy()
-                data['Cited by'] = data['Cited by'].fillna(0)
-
-                #filtering
-                if(invert_keys):
-                    data = data[data[select_col].str.contains('|'.join(keylist), na=False)]
+            def vis_hist():
+                vis_choice = st.selectbox("Visualize: ", ("Citation Count"), ("Year Count"))
+                if vis_choice == "Citation Count":
+                    vis = alt.Chart(pd.DataFrame(papers)).mark_bar().encode(
+                        x = alt.X('Citation: Q', alt.Bin(extent=[MIN1, MAX1], maxbins=20)),
+                        y = alt.Y("count()"))
+                    return vis
                 else:
-                    data = data[~data[select_col].str.contains('|'.join(keylist), na=False)]
-
-                vis = pd.DataFrame()
-                vis[['doctype','source','citby','year']] = data[['Document Type','Source title','Cited by','Year']]
-                viz=vis.groupby(['doctype', 'source', 'year'])['citby'].agg(['sum','count']).reset_index()  
-                viz.rename(columns={'sum': 'cited by', 'count': 'total docs'}, inplace=True)
-        
-                fig = alt.Chart(viz).mark_bar().encode(
-                    x=alt.X('year:O', title='Year', bin=True),
-                    y=alt.Y('cited by:Q', title='Total Cited By Count'),
-                    color=alt.Color('doctype:N', title='Document Type'),
-                    tooltip=['source:N', 'cited by:Q', 'total docs:Q']
-                ).properties(
-                    title='Cited By Count of Documents by Year and Document Type'
-                )
-                fig.update_layout(height=800, width=1200)
-                return fig, viz
-            
-            years, papers = listyear(extype)
-    
-            
-            if {'Document Type','Source title','Cited by','Year'}.issubset(papers.columns):
-              
-                if st.button("Submit", on_click = reset_all):
-                    fig, viz = vis_histogram(extype)
-                    st.plotly_chart(fig, height=800, width=1200)
-                    st.dataframe(viz)
-               
-            else:
-                st.error('We require these columns: Document Type, Source title, Cited by, Year', icon="🚨")
-        
-        with tab2:
-            st.markdown('**numpy.average — NumPy v1.24 Manual. (n.d.). Numpy.Average — NumPy v1.24 Manual.** https://numpy.org/doc/stable/reference/generated/numpy.average.html')
-            
+                    vis = alt.Chart(pd.DataFrame(papers)).mark_bar().encode(
+                        x = alt.X('Year: Q', alt.Bin(extent=[MIN, MAX], maxbins=20)),
+                        y = alt.Y("count()"))
+                    return vis
     except:
         st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
         st.stop()
+
+
+
+
+
+    
+
+    
+     
+     
+     
