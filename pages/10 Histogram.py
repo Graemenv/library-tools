@@ -4,9 +4,9 @@ import altair as alt
 import numpy as np
 import sys
 import os
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) #this is because I can only run streamlit from \pages\, which cant access sf in \tools\. This searches whole directory regardless
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, ROOT_DIR)
-from libtools import sourceformat as sf #renamed my tools folder to libtools because there was another tools somewhere in my repo, so the calling was confused.
+from libtools import sourceformat as sf 
 
 
 #===config===
@@ -253,13 +253,13 @@ if uploaded_file is not None:
 
                 if vis_choice == "Citation Count":
                     fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
-                        x = alt.X('Cited by:Q', alt.Bin(extent=[MIN1, MAX1], maxbins=20)), #min/max are lower/upper bound on function, split through 20 bins. That may be too many but we'll see.
+                        x = alt.X('Cited by:Q', bin=alt.Bin(extent=[MIN1, MAX1], maxbins=20)), #min/max are lower/upper bound on function, split through 20 bins. That may be too many but we'll see.
                         y = alt.Y("count()"))
                     return fig
 
                 else:
                     fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
-                        x = alt.X('Year:Q', alt.Bin(extent=[MIN, MAX], maxbins=20)),
+                        x = alt.X('Year:Q', bin=alt.Bin(extent=[MIN, MAX], maxbins=20)),
                         y = alt.Y("count()"))
                     return fig
 

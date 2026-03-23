@@ -3,7 +3,10 @@ import pandas as pd
 import altair as alt
 import numpy as np
 import sys
-from tools import sourceformat as sf
+import os
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) #this is because I can only run streamlit from \pages\, which cant access sf in \tools\. This searches whole directory regardless
+sys.path.insert(0, ROOT_DIR)
+from libtools import sourceformat as sf #renamed my tools folder to libtools because there was another tools somewhere in my repo, so the calling was confused.
 
 
 #===config===
@@ -23,8 +26,8 @@ hide_streamlit_style = """
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-with st.popover("🔗 Menu"):
+'''
+with st.popover("🔗 Menu"): #This is still commented out for now because I'm still just trying to figure out how to actually make the page work.
     st.page_link("https://www.coconut-libtool.com/", label="Home", icon="🏠")
     st.page_link("pages/1 Scattertext.py", label="Scattertext", icon="1️⃣")
     st.page_link("pages/2 Topic Modeling.py", label="Topic Modeling", icon="2️⃣")
@@ -35,7 +38,8 @@ with st.popover("🔗 Menu"):
     st.page_link("pages/7 Sentiment Analysis.py", label="Sentiment Analysis", icon="7️⃣")
     st.page_link("pages/8 Shifterator.py", label="Shifterator", icon="8️⃣")
     st.page_link("pages/9 WordCloud.py", label = "WordCloud", icon = "9️⃣")
-    st.page_link("pages/10 Histogram.py", label = "Histogram", icon = "🔟")
+    st.page_link("pages/LibTool_HistogramDraft2.py", label = "Histogram", icon = "🔟")
+'''
 
 with st.expander("Before you start", expanded = True):
      
@@ -81,7 +85,7 @@ with st.expander("Before you start", expanded = True):
             st.markdown("![Downloading table](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/tablenetwork.png)")
     
 st.header("Histogram Visualization", anchor=False)
-st.subheader('Put your file here...', anchor=False)
+st.subheader('Put your file here...', anchor=False) #copy/pasted section from sunburst here until line 197
 
 #===clear cache===
 def reset_all():
@@ -114,7 +118,7 @@ def upload(extype):
 
 @st.cache_data(ttl=3600)
 def conv_txt(extype):
-    if("PMID" in (uploaded_file.read()).decode()):
+    if("PMID" in (uploaded_file.read()).decode()): #copilot seemed to insist this block was somehow a problem. It claimed that medline() would return the wrong keywords which would cause getminmax() to fail later on.
         uploaded_file.seek(0)
         papers = sf.medline(uploaded_file)
         print(papers)
@@ -190,16 +194,16 @@ if uploaded_file is not None:
         elif extype.endswith('.tar.gz') or extype.endswith('.xml'):
             papers = conv_pub(uploaded_file)
         elif extype.endswith(('.xls', '.xlsx')):
-            papers = readxls(uploaded_file)
+            papers = readxls(uploaded_file) #end copy/paste
 
-        def get_minmax(extype):
+        def get_minmax(extype): #roughly same as the fn from sunburst, but it doesnt have the GAP variable because hist does not rely on averages.
             extype = extype
             MIN = int(papers['Year'].min())
             MAX = int(papers['Year'].max())
             MIN1 = int(papers['Cited by'].min())
-            MAX1 = int(papers['Cited by'].max())
+            MAX1 = int(papers['Cited by'].max()) #min/max for these will be range on the x-axis.
             unique_stitle = set()
-            unique_stitle.update(papers['Source title'].dropna())
+            unique_stitle.update(papers['Source title'].dropna()) #Honestly unsure what this does.
             list_stitle = sorted(list(unique_stitle))
             return papers, MIN, MAX, MIN1, MAX1, list_stitle
         
@@ -221,30 +225,59 @@ if uploaded_file is not None:
                 filtered_keys = st.text_input("Filter words in source, seperate with semicolon (;)", value = "\n", on_change=None) 
                 select_col = st.selectbox("Column to filter from", (list(papers)))
             keylist = filtered_keys.split(";")
+            vis_choice = st.selectbox("Visualize:", ("Years", "Citation Count")) #extra selectbox because users will have choice to generate by frequency of either citation count or years.
 
-            def listyear(extype):
-                global papers
+            def listyear(extype): #this is where I think there might be a problem, but tbh I'm not sure why.
+                df = papers.copy() #You'll see on the original this is where he globalized papers.Copilot said to replace this with a copy because it filters too heavily, which would basically over-clean papers so that when I re-reference its columns in my vis_hist() it won't work 
                 years = list(range(YEAR[0],YEAR[1]+1))
                 cited = list(range(KEYLIM[0],KEYLIM[1]+1))
                 if stitle:
-                    papers = papers[papers['Source title'].str.contains(stitle, case=False, na=False)]
-                papers = papers.loc[papers['Year'].isin(years)]
-                papers = papers.loc[papers['Cited by'].isin(cited)]
-                papers['Cited by'] = papers['Cited by'].fillna(0)
-                return years, papers
+                    df = df[df['Source title'].str.contains(stitle, case=False, na=False)] 
+                df = df[df['Year'].isin(years)]
+                df = df[df['Cited by'].isin(cited)]
+                df['Cited by'] = df['Cited by'].fillna(0)
+                return years, df 
             
-            def vis_hist():
-                vis_choice = st.selectbox("Visualize: ", ("Citation Count"), ("Year Count"))
+            #on SB code this and filtering block below are inside function but I globalized them because I figured the function would need to take data, min/max, and vis_choice to run otherwise. Very unsure though...
+            data = papers.copy()
+            data['Cited by'] = data['Cited by'].fillna(0)
+
+            #filtering
+            if invert_keys:
+                data = data[data[select_col].str.contains('|'.join(keylist), na=False)]
+            else:
+                data = data[~data[select_col].str.contains('|'.join(keylist), na=False)]
+
+            
+            def vis_hist(data): #I'm pretty sure this is good but I haven't actually been able to run this part lol. please lmk if it looks bad
+
                 if vis_choice == "Citation Count":
-                    vis = alt.Chart(pd.DataFrame(papers)).mark_bar().encode(
-                        x = alt.X('Citation: Q', alt.Bin(extent=[MIN1, MAX1], maxbins=20)),
+                    fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
+                        x = alt.X('Cited by:Q', alt.Bin(extent=[MIN1, MAX1], maxbins=20)), #min/max are lower/upper bound on function, split through 20 bins. That may be too many but we'll see.
                         y = alt.Y("count()"))
-                    return vis
+                    return fig
+
                 else:
-                    vis = alt.Chart(pd.DataFrame(papers)).mark_bar().encode(
-                        x = alt.X('Year: Q', alt.Bin(extent=[MIN, MAX], maxbins=20)),
+                    fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
+                        x = alt.X('Year:Q', alt.Bin(extent=[MIN, MAX], maxbins=20)),
                         y = alt.Y("count()"))
-                    return vis
+                    return fig
+
+            years, filtered_papers = listyear(extype) #really not sure what this block does but I think it may be a problem?
+                         
+            if {'Document Type','Source title','Cited by','Year'}.issubset(papers.columns):
+              
+                if st.button("Submit", on_click = reset_all):
+                    fig = vis_hist(filtered_papers)
+                    st.altair_chart(fig, use_container_width=True)
+
+
+                
+            else: #back to copy/paste from here on.
+                st.error('We require these columns: Document Type, Source title, Cited by, Year', icon="🚨")
+        
+        with tab2:
+            st.markdown('**numpy.average — NumPy v1.24 Manual. (n.d.). Numpy.Average — NumPy v1.24 Manual.** https://numpy.org/doc/stable/reference/generated/numpy.average.html')
     except:
         st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
         st.stop()
