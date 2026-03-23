@@ -71,6 +71,11 @@ with mt1:
         st.markdown("![WordCloud](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/wordcloud.png)")
         if(st.button("Go to WordCloud")):
             st.switch_page("pages/9 WordCloud.py")
+    
+    with col1.container(border=True):
+        st.markdown("![Histogram](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/sentiment.png)")
+        if(st.button("Go to Histogram")):
+            st.switch_page("pages/10 Histogram.py")
 
 with mt2:
     st.header("Before you start", anchor=False)

@@ -26,8 +26,8 @@ hide_streamlit_style = """
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-'''
-with st.popover("🔗 Menu"): #This is still commented out for now because I'm still just trying to figure out how to actually make the page work.
+
+with st.popover("🔗 Menu"):
     st.page_link("https://www.coconut-libtool.com/", label="Home", icon="🏠")
     st.page_link("pages/1 Scattertext.py", label="Scattertext", icon="1️⃣")
     st.page_link("pages/2 Topic Modeling.py", label="Topic Modeling", icon="2️⃣")
@@ -38,8 +38,8 @@ with st.popover("🔗 Menu"): #This is still commented out for now because I'm s
     st.page_link("pages/7 Sentiment Analysis.py", label="Sentiment Analysis", icon="7️⃣")
     st.page_link("pages/8 Shifterator.py", label="Shifterator", icon="8️⃣")
     st.page_link("pages/9 WordCloud.py", label = "WordCloud", icon = "9️⃣")
-    st.page_link("pages/LibTool_HistogramDraft2.py", label = "Histogram", icon = "🔟")
-'''
+    st.page_link("pages/10 Histogram.py", label = "Histogram", icon = "🔟")
+
 
 with st.expander("Before you start", expanded = True):
      
@@ -85,7 +85,7 @@ with st.expander("Before you start", expanded = True):
             st.markdown("![Downloading table](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/tablenetwork.png)")
     
 st.header("Histogram Visualization", anchor=False)
-st.subheader('Put your file here...', anchor=False) #copy/pasted section from sunburst here until line 197
+st.subheader('Put your file here...', anchor=False)
 
 #===clear cache===
 def reset_all():
@@ -118,7 +118,7 @@ def upload(extype):
 
 @st.cache_data(ttl=3600)
 def conv_txt(extype):
-    if("PMID" in (uploaded_file.read()).decode()): #copilot seemed to insist this block was somehow a problem. It claimed that medline() would return the wrong keywords which would cause getminmax() to fail later on. // this is just for data from PubMed so we can test it later
+    if("PMID" in (uploaded_file.read()).decode()): 
         uploaded_file.seek(0)
         papers = sf.medline(uploaded_file)
         print(papers)
@@ -194,16 +194,16 @@ if uploaded_file is not None:
         elif extype.endswith('.tar.gz') or extype.endswith('.xml'):
             papers = conv_pub(uploaded_file)
         elif extype.endswith(('.xls', '.xlsx')):
-            papers = readxls(uploaded_file) #end copy/paste
+            papers = readxls(uploaded_file)
 
-        def get_minmax(extype): #roughly same as the fn from sunburst, but it doesnt have the GAP variable because hist does not rely on averages.
+        def get_minmax(extype):
             extype = extype
             MIN = int(papers['Year'].min())
             MAX = int(papers['Year'].max())
             MIN1 = int(papers['Cited by'].min())
-            MAX1 = int(papers['Cited by'].max()) #min/max for these will be range on the x-axis.
+            MAX1 = int(papers['Cited by'].max()) 
             unique_stitle = set()
-            unique_stitle.update(papers['Source title'].dropna()) #Honestly unsure what this does. // dropna() removes empty values (shows up as NaN)
+            unique_stitle.update(papers['Source title'].dropna())
             list_stitle = sorted(list(unique_stitle))
             return papers, MIN, MAX, MIN1, MAX1, list_stitle
         
@@ -225,10 +225,10 @@ if uploaded_file is not None:
                 filtered_keys = st.text_input("Filter words in source, seperate with semicolon (;)", value = "\n", on_change=None) 
                 select_col = st.selectbox("Column to filter from", (list(papers)))
             keylist = filtered_keys.split(";")
-            vis_choice = st.selectbox("Visualize:", ("Years", "Citation Count")) #extra selectbox because users will have choice to generate by frequency of either citation count or years.
+            vis_choice = st.selectbox("Visualize:", ("Years", "Citation Count"))
 
-            def listyear(extype): #this is where I think there might be a problem, but tbh I'm not sure why.
-                df = papers.copy() #You'll see on the original this is where he globalized papers.Copilot said to replace this with a copy because it filters too heavily, which would basically over-clean papers so that when I re-reference its columns in my vis_hist() it won't work // should be fine
+            def listyear(extype):
+                df = papers.copy()
                 years = list(range(YEAR[0],YEAR[1]+1))
                 cited = list(range(KEYLIM[0],KEYLIM[1]+1))
                 if stitle:
@@ -238,7 +238,6 @@ if uploaded_file is not None:
                 df['Cited by'] = df['Cited by'].fillna(0)
                 return years, df 
             
-            #on SB code this and filtering block below are inside function but I globalized them because I figured the function would need to take data, min/max, and vis_choice to run otherwise. Very unsure though...
             data = papers.copy()
             data['Cited by'] = data['Cited by'].fillna(0)
 
@@ -249,11 +248,11 @@ if uploaded_file is not None:
                 data = data[~data[select_col].str.contains('|'.join(keylist), na=False)]
 
             
-            def vis_hist(data): #I'm pretty sure this is good but I haven't actually been able to run this part lol. please lmk if it looks bad // looks fine to me
+            def vis_hist(data):
 
                 if vis_choice == "Citation Count":
                     fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
-                        x = alt.X('Cited by:Q', bin=alt.Bin(extent=[MIN1, MAX1], maxbins=20)), #min/max are lower/upper bound on function, split through 20 bins. That may be too many but we'll see.
+                        x = alt.X('Cited by:Q', bin=alt.Bin(extent=[MIN1, MAX1], maxbins=20)), 
                         y = alt.Y("count()"))
                     return fig
 
@@ -263,7 +262,7 @@ if uploaded_file is not None:
                         y = alt.Y("count()"))
                     return fig
 
-            years, filtered_papers = listyear(extype) #really not sure what this block does but I think it may be a problem? // this puts the list of years in the variable 'years' and the new df from listyear in filtered_papers. filtered_papers should just contain whatever articles that fit in the range of years/citation count that the user selected on the sliders on line 221/222. not sure if you ned 'years' though
+            years, filtered_papers = listyear(extype)
                          
             if {'Document Type','Source title','Cited by','Year'}.issubset(papers.columns):
               
@@ -273,20 +272,14 @@ if uploaded_file is not None:
 
 
                 
-            else: #back to copy/paste from here on. 
+            else: 
                 st.error('We require these columns: Document Type, Source title, Cited by, Year', icon="🚨")
         
         with tab2:
             st.markdown('**numpy.average — NumPy v1.24 Manual. (n.d.). Numpy.Average — NumPy v1.24 Manual.** https://numpy.org/doc/stable/reference/generated/numpy.average.html')
-    except Exception as e: # this will print out the error, should help with debugging
-	    st.error(e)
-# // modify the exception above so that it prints out the error for debugging
-
-''' 
-except Exception as e: # this will print out the error, should help with debugging
-	st.error(e)
-'''
-
+    except:
+        st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
+        st.stop()
 
 
 
