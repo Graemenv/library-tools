@@ -4,10 +4,15 @@ import altair as alt
 import numpy as np
 import sys
 import os
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) #This was suggested by copilot because for some reason this file in pages cannot find tools?
 sys.path.insert(0, ROOT_DIR)
-from libtools import sourceformat as sf 
-
+from libtools import sourceformat as sf #this is because somewhere there is another "tools" in my repo?
+'''
+I may have forked this repo wrong or something is wrong with my python installation in general. Lots of strange happenings in this.
+for the record it works completely fine with this but returns errors if I change any of these packages.
+I need to run this on someone else's computer with the standard set of imports to see if its just mine that has these issues.
+If that's so, I'll push it w the standard code and that's fine if it can't run on mine anymore. 
+'''
 
 #===config===
 st.set_page_config(
