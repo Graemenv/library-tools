@@ -4,15 +4,11 @@ import altair as alt
 import numpy as np
 import sys
 import os
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) #This was suggested by copilot because for some reason this file in pages cannot find tools?
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, ROOT_DIR)
-from libtools import sourceformat as sf #this is because somewhere there is another "tools" in my repo?
-'''
-I may have forked this repo wrong or something is wrong with my python installation in general. Lots of strange happenings in this.
-for the record it works completely fine with this but returns errors if I change any of these packages.
-I need to run this on someone else's computer with the standard set of imports to see if its just mine that has these issues.
-If that's so, I'll push it w the standard code and that's fine if it can't run on mine anymore. 
-'''
+from libtools import sourceformat as sf
+from altair.datasets import data
+
 
 #===config===
 st.set_page_config(
@@ -203,12 +199,12 @@ if uploaded_file is not None:
 
         def get_minmax(extype):
             extype = extype
-            MIN = int(papers['Year'].min())
-            MAX = int(papers['Year'].max())
+            MIN = int((papers['Year'].min()))
+            MAX = int((papers['Year'].max()))
             MIN1 = int(papers['Cited by'].min())
             MAX1 = int(papers['Cited by'].max()) 
             unique_stitle = set()
-            unique_stitle.update(papers['Source title'].dropna())
+            unique_stitle.update(papers.columns.dropna()) #this does provide all columns which is good but now it no longer actually counts frequency? Why does it only work for source title?
             list_stitle = sorted(list(unique_stitle))
             return papers, MIN, MAX, MIN1, MAX1, list_stitle
         
@@ -235,9 +231,7 @@ if uploaded_file is not None:
             def listyear(extype):
                 df = papers.copy()
                 years = list(range(YEAR[0],YEAR[1]+1))
-                cited = list(range(KEYLIM[0],KEYLIM[1]+1))
-                if stitle:
-                    df = df[df['Source title'].str.contains(stitle, case=False, na=False)] 
+                cited = list(range(KEYLIM[0],KEYLIM[1]+1)) 
                 df = df[df['Year'].isin(years)]
                 df = df[df['Cited by'].isin(cited)]
                 df['Cited by'] = df['Cited by'].fillna(0)
@@ -263,7 +257,7 @@ if uploaded_file is not None:
 
                 else:
                     fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
-                        x = alt.X('Year:Q', bin=alt.Bin(extent=[MIN, MAX], maxbins=20)),
+                        x = alt.X('Year:N', bin=alt.Bin(extent=[MIN, MAX], maxbins=20)),
                         y = alt.Y("count()"))
                     return fig
 
