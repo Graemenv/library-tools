@@ -204,7 +204,7 @@ if uploaded_file is not None:
             MIN1 = int(papers['Cited by'].min())
             MAX1 = int(papers['Cited by'].max()) 
             unique_stitle = set()
-            unique_stitle.update(papers.columns.dropna()) #this does provide all columns which is good but now it no longer actually counts frequency? Why does it only work for source title?
+            unique_stitle.update(papers.columns.dropna())
             list_stitle = sorted(list(unique_stitle))
             return papers, MIN, MAX, MIN1, MAX1, list_stitle
         
