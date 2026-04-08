@@ -4,7 +4,7 @@ import altair as alt
 import numpy as np
 import sys
 import os
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) #specific to my computer, will not keep on pushed version.
 sys.path.insert(0, ROOT_DIR)
 from libtools import sourceformat as sf
 from altair.datasets import data
@@ -46,10 +46,11 @@ with st.expander("Before you start", expanded = True):
      
         tab1, tab2, tab3, tab4 = st.tabs(["Prologue", "Steps", "Requirements", "Download"])
         with tab1:
-            st.write("The histogram will allow you to see the frequencies of specific variables in your document, such as citations, years, or specific words.")
+            st.write("The histogram will allow you to see the frequencies of specific variables in your document, such as citations, years, by your choice of column. This will allow you to see the range of years and outside publications that are most relevant to your dataset.")
         with tab2:
             st.text("1. Put your CSV file.")
-            #more steps?
+            st.text("2. Choose a specific column you'd like to focus on")
+            st.text("3. Choose whether you'd like to see the frequencies of years or citations")
 
             
         with tab3:
