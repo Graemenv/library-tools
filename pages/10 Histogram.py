@@ -1,16 +1,20 @@
-import streamlit as st
-import pandas as pd
-import altair as alt
-import numpy as np
 import sys
 import os
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) #specific to my computer, will not keep on pushed version.
 sys.path.insert(0, ROOT_DIR)
 from libtools import sourceformat as sf
+import altair as alt
 from altair.datasets import data
+import streamlit as st
+import pandas as pd
+from wordcloud import WordCloud
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+nltk.download('stopwords')
+nltk.download('punkt_tab')
 
-
-#===config===
+# ===config===
 st.set_page_config(
     page_title="Coconut",
     page_icon="🥥",
@@ -27,6 +31,7 @@ hide_streamlit_style = """
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 
 with st.popover("🔗 Menu"):
     st.page_link("https://www.coconut-libtool.com/", label="Home", icon="🏠")
@@ -79,48 +84,39 @@ with st.expander("Before you start", expanded = True):
             """, language=None)          
 
         with tab4:  
-            st.subheader(':blue[Histogram]', anchor=False)
-            st.text("Click the camera icon on the top right menu (you may need to hover your cursor within the visualization)")
-            st.markdown("![Downloading visualization](https://raw.githubusercontent.com/faizhalas/library-tools/main/images/download_bertopic.jpg)")
-            st.subheader(":blue[Download table as CSV]", anchor=False)
-            st.text("Hover cursor over table, and click download arrow")
-            st.markdown("![Downloading table](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/tablenetwork.png)")
+            st.subheader(':blue[WordCloud Download]', anchor=False)
+        st.write("Right-click image and click \"Save-as\"")
     
 st.header("Histogram Visualization", anchor=False)
 st.subheader('Put your file here...', anchor=False)
+#========unique id========
+@st.cache_resource(ttl=3600)
+def create_list():
+    l = [1, 2, 3]
+    return l
+
+l = create_list()
+first_list_value = l[0]
+l[0] = first_list_value + 1
+uID = str(l[0])
+
+@st.cache_data(ttl=3600)
+def get_ext(uploaded_file):
+    extype = uID+uploaded_file.name
+    return extype
 
 #===clear cache===
 def reset_all():
     st.cache_data.clear()
 
+#===text reading===
 @st.cache_data(ttl=3600)
-def get_ext(extype):
-    extype = uploaded_file.name
-    return extype
-
-@st.cache_data(ttl=3600)
-def upload(extype):
-    papers = pd.read_csv(uploaded_file)
-    #lens.org
-    if 'Publication Year' in papers.columns:
-        papers.rename(columns={'Publication Year': 'Year', 'Citing Works Count': 'Cited by',
-                               'Publication Type': 'Document Type', 'Source Title': 'Source title'}, inplace=True)
-    elif "About the data" in papers.columns[0]:
-        papers = sf.dim(papers)
-        col_dict = {'MeSH terms': 'Keywords',
-        'PubYear': 'Year',
-        'Times cited': 'Cited by',
-        'Publication Type': 'Document Type'
-        }
-        papers.rename(columns=col_dict, inplace=True)
-    elif "ids.openalex" in papers.columns:
-        papers.rename(columns={'publication_year': 'Year', 'cited_by_count': 'Cited by',
-                               'type': 'Document Type', 'primary_location.source.display_name': 'Source title'}, inplace=True)
-    return papers
+def read_txt(intext):
+    return (intext.read()).decode()
 
 @st.cache_data(ttl=3600)
 def conv_txt(extype):
-    if("PMID" in (uploaded_file.read()).decode()): 
+    if("PMID" in (uploaded_file.read()).decode()):
         uploaded_file.seek(0)
         papers = sf.medline(uploaded_file)
         print(papers)
@@ -136,36 +132,31 @@ def conv_txt(extype):
             'rights_date_used': 'Year'}
     uploaded_file.seek(0)
     papers = pd.read_csv(uploaded_file, sep='\t')
+    
+    #if text just has one column (or is not csv) return nothing
+    if(len(papers.columns)==1):
+        return
+
     if("htid" in papers.columns):
         papers = sf.htrc(papers)
     papers.rename(columns=col_dict, inplace=True)
     print(papers)
     return papers
 
-
+#===csv/xlsx reading===
 @st.cache_data(ttl=3600)
-def conv_json(extype):
-    col_dict={'title': 'title',
-    'rights_date_used': 'Year',
-    'content_provider_code': 'Document Type',
-    'Keywords':'Source title'
-    }
-    keywords = pd.read_json(uploaded_file)
-    keywords = sf.htrc(keywords)
-    keywords['Cited by'] = keywords.groupby(['Keywords'])['Keywords'].transform('size')
-    keywords.rename(columns=col_dict,inplace=True)
-    return keywords
-
-def conv_pub(extype):
-    if (get_ext(extype)).endswith('.tar.gz'):
-        bytedata = extype.read()
-        keywords = sf.readPub(bytedata)
-    elif (get_ext(extype)).endswith('.xml'):
-        bytedata = extype.read()
-        keywords = sf.readxml(bytedata)
-    keywords['Cited by'] = keywords.groupby(['Keywords'])['Keywords'].transform('size')
-    st.write(keywords)
-    return keywords
+def upload(file):
+    papers = pd.read_csv(uploaded_file)
+    if "About the data" in papers.columns[0]:
+        papers = sf.dim(papers)
+        col_dict = {'MeSH terms': 'Keywords',
+        'PubYear': 'Year',
+        'Times cited': 'Cited by',
+        'Publication Type': 'Document Type'
+        }
+        papers.rename(columns=col_dict, inplace=True)
+    
+    return papers
 
 @st.cache_data(ttl=3600)
 def readxls(file):
@@ -182,72 +173,112 @@ def readxls(file):
     return papers
 
 #===Read data===
-uploaded_file = st.file_uploader('', type=['csv', 'txt', 'json', 'tar.gz', 'xml', 'xls', 'xlsx'], on_change=reset_all)
-
+uploaded_file = st.file_uploader('', type=['txt', 'csv', 'xls', 'xlsx'], on_change=reset_all)
+    
 if uploaded_file is not None:
-    try:
-        extype = get_ext(uploaded_file)
-        if extype.endswith('.csv'):
-             papers = upload(extype) 
-        elif extype.endswith('.txt'):
-             papers = conv_txt(extype)
-        elif extype.endswith('.json'):
-            papers = conv_json(extype)
-        elif extype.endswith('.tar.gz') or extype.endswith('.xml'):
-            papers = conv_pub(uploaded_file)
-        elif extype.endswith(('.xls', '.xlsx')):
-            papers = readxls(uploaded_file)
-
-        def get_minmax(extype):
-            extype = extype
-            MIN = int((papers['Year'].min()))
-            MAX = int((papers['Year'].max()))
-            MIN1 = int(papers['Cited by'].min())
-            MAX1 = int(papers['Cited by'].max()) 
-            unique_stitle = set()
-            unique_stitle.update(papers.columns.dropna())
-            list_stitle = sorted(list(unique_stitle))
-            return papers, MIN, MAX, MIN1, MAX1, list_stitle
+    
+    tab1, tab2, tab3 = st.tabs(["📈 Generate visualization", "📃 Reference", "⬇️ Download Help"])
+    with tab1:
+        c1, c2 = st.columns(2)
+    
+        with c1:
+            max_font = st.number_input("Max Font Size", min_value = 1, value = 100)
+            image_height = st.number_input("Image height", value = 400)
+            background = st.selectbox("Background color", ["white","black"])
+ 
+        with c2:
+            max_words = st.number_input("Max Word Count", min_value = 1, value = 250)
+            image_width = st.number_input("Image width", value = 500)
+            scale = st.number_input("Scale", value = 2)
+            words_to_remove = st.text_input("Remove specific words. Separate words by semicolons (;)")
+            filterwords = words_to_remove.split(';')
         
-        tab1, tab2 = st.tabs(["📈 Generate visualization", "📓 Recommended Reading"])
+        try:
+            extype = get_ext(uploaded_file)
 
-        with tab1:
-            try:
-                papers, MIN, MAX, MIN1, MAX1, list_stitle = get_minmax(extype)
-            except KeyError:
-                st.error('Error: Please check again your columns.')
-                sys.exit(1)
+            if extype.endswith(".txt"):    
+                try:
+                    texts = conv_txt(uploaded_file)
+                    colcho = c1.selectbox("Choose Column", list(texts))
+                    fulltext = " ".join(list(texts[colcho]))
+                    tokenized = word_tokenize(fulltext)
 
-            stitle = st.selectbox('Focus on', (list_stitle), index=None, on_change=reset_all)
-            col1, col2 = st.columns(2)
-            YEAR = col1.slider('Year', min_value=MIN, max_value=MAX, value=(MIN, MAX))
-            KEYLIM = col2.slider('Cited By Count',min_value = MIN1, max_value = MAX1, value = (MIN1,MAX1))
-            with st.expander("Filtering settings"):
-                invert_keys = st.toggle("Invert keys")
-                filtered_keys = st.text_input("Filter words in source, seperate with semicolon (;)", value = "\n", on_change=None) 
-                select_col = st.selectbox("Column to filter from", (list(papers)))
-            keylist = filtered_keys.split(";")
-            vis_choice = st.selectbox("Visualize:", ("Years", "Citation Count"))
+                    filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
+                    fulltext = ' '.join(filtered)
+                    
+                except:
+                    fulltext = read_txt(uploaded_file)
+                    tokenized = word_tokenize(fulltext)
+                    filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
+                    fulltext = ' '.join(filtered)
+                
+                if st.button("Submit"):
+                    
+                    wordcloud = WordCloud(max_font_size = max_font,
+                    max_words = max_words,
+                    background_color=background,
+                    stopwords = filterwords,
+                    height = image_height,
+                    width = image_width,
+                    scale = scale).generate(fulltext)
+                    vis = texts.head(20)
+                    fig = alt.Chart(pd.DataFrame(vis)).mark_bar().encode(x=alt.X("count:Q"),y=alt.Y("word:N", sort='-x'))
+                    st.altair_chart(fig, use_container_width=True)
 
-            def listyear(extype):
-                df = papers.copy()
-                years = list(range(YEAR[0],YEAR[1]+1))
-                cited = list(range(KEYLIM[0],KEYLIM[1]+1)) 
-                df = df[df['Year'].isin(years)]
-                df = df[df['Cited by'].isin(cited)]
-                df['Cited by'] = df['Cited by'].fillna(0)
-                return years, df 
-            
-            data = papers.copy()
-            data['Cited by'] = data['Cited by'].fillna(0)
 
-            #filtering
-            if invert_keys:
-                data = data[data[select_col].str.contains('|'.join(keylist), na=False)]
-            else:
-                data = data[~data[select_col].str.contains('|'.join(keylist), na=False)]
 
-            
+            elif extype.endswith(".csv"):
+                texts = upload(uploaded_file)
+                colcho = c1.selectbox("Choose Column", list(texts))
+                fullcolumn = " ".join(list(texts[colcho]))
+                tokenized = word_tokenize(fullcolumn)
+                filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
+                fullcolumn = ' '.join(filtered)
+
+                if st.button("Submit"):
+                    wordcloud = WordCloud(max_font_size = max_font,
+                    max_words = max_words,
+                    background_color=background,
+                    stopwords = filterwords,
+                    height = image_height,
+                    width = image_width,
+                    scale = scale).generate(fullcolumn)
+                    img = wordcloud.to_image()
+
+                    st.image(img, use_container_width=True)
+
+            elif extype.endswith(('.xls', '.xlsx')):
+                texts = readxls(uploaded_file)
+                colcho = c1.selectbox("Choose Column", list(texts))
+                fullcolumn = " ".join(pd.Series(list(texts[colcho])).dropna().astype(str))
+                tokenized = word_tokenize(fullcolumn)
+                filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
+                fullcolumn = ' '.join(filtered)
+
+                if st.button("Submit"):
+                    wordcloud = WordCloud(max_font_size = max_font,
+                    max_words = max_words,
+                    background_color=background,
+                    stopwords = filterwords,
+                    height = image_height,
+                    width = image_width,
+                    scale = scale).generate(fullcolumn)
+                    img = wordcloud.to_image()
+
+                    st.image(img, use_container_width=True)       
+
+
+
+
+
+
+        except Exception as e:
+                    st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
+                    st.stop()
+
+
+
+'''     
             def vis_hist(data):
 
                 if vis_choice == "Citation Count":
@@ -280,6 +311,7 @@ if uploaded_file is not None:
     except:
         st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
         st.stop()
+        '''
 
 
 
