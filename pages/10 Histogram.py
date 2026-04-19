@@ -213,7 +213,6 @@ if uploaded_file is not None:
                     fulltext = ' '.join(filtered)
                 
                 if st.button("Submit"):
-                    
                     wordcloud = WordCloud(max_font_size = max_font,
                     max_words = max_words,
                     background_color=background,
@@ -221,9 +220,11 @@ if uploaded_file is not None:
                     height = image_height,
                     width = image_width,
                     scale = scale).generate(fulltext)
-                    vis = texts.head(20)
-                    fig = alt.Chart(pd.DataFrame(vis)).mark_bar().encode(x=alt.X("count:Q"),y=alt.Y("word:N", sort='-x'))
-                    st.altair_chart(fig, use_container_width=True)
+                    freq = wordcloud.process_text(fulltext) #returns dictionary of frequencies
+                    freq_list= list(freq.items()) #creates list of key-value pairs as tuples
+                    df = pd.DataFrame(freq_list) #turns this into dataframe
+                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("1:Q"), y=alt.Y("0:N")) #should display dataframe.
+                    st.altair_chart(fig)
 
 
 
@@ -267,51 +268,12 @@ if uploaded_file is not None:
 
                     st.image(img, use_container_width=True)       
 
+        except Exception as e: # this will print out the error, should help with debugging
+            st.error(e)
 
 
 
 
-
-        except Exception as e:
-                    st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
-                    st.stop()
-
-
-
-'''     
-            def vis_hist(data):
-
-                if vis_choice == "Citation Count":
-                    fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
-                        x = alt.X('Cited by:Q', bin=alt.Bin(extent=[MIN1, MAX1], maxbins=20)), 
-                        y = alt.Y("count()"))
-                    return fig
-
-                else:
-                    fig = alt.Chart(pd.DataFrame(data)).mark_bar().encode(
-                        x = alt.X('Year:N', bin=alt.Bin(extent=[MIN, MAX], maxbins=20)),
-                        y = alt.Y("count()"))
-                    return fig
-
-            years, filtered_papers = listyear(extype)
-                         
-            if {'Document Type','Source title','Cited by','Year'}.issubset(papers.columns):
-              
-                if st.button("Submit", on_click = reset_all):
-                    fig = vis_hist(filtered_papers)
-                    st.altair_chart(fig, use_container_width=True)
-
-
-                
-            else: 
-                st.error('We require these columns: Document Type, Source title, Cited by, Year', icon="🚨")
-        
-        with tab2:
-            st.markdown('**numpy.average — NumPy v1.24 Manual. (n.d.). Numpy.Average — NumPy v1.24 Manual.** https://numpy.org/doc/stable/reference/generated/numpy.average.html')
-    except:
-        st.error("Please ensure that your file is correct. Please contact us if you find that this is an error.", icon="🚨")
-        st.stop()
-        '''
 
 
 
