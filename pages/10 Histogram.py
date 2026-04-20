@@ -222,8 +222,8 @@ if uploaded_file is not None:
                     scale = scale).generate(fulltext)
                     freq = wordcloud.process_text(fulltext) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
-                    df = pd.DataFrame(freq_list) #turns this into dataframe
-                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("1:Q"), y=alt.Y("0:N")) #should display dataframe.
+                    df = pd.DataFrame(freq_list, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
+                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)
 
 
