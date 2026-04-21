@@ -51,7 +51,7 @@ with st.expander("Before you start", expanded = True):
      
         tab1, tab2, tab3, tab4 = st.tabs(["Prologue", "Steps", "Requirements", "Download"])
         with tab1:
-            st.write("The histogram will allow you to see the frequencies of specific variables in your document, such as citations, years, by your choice of column. This will allow you to see the range of years and outside publications that are most relevant to your dataset.")
+            st.write("The histogram uses a WordCloud method to calculate the frequency of specific variables in your document, such as keywords, years, or citations, by your choice of column. This provides the convenience of the WordCloud in a more straightforward and calculated presentation.")
         with tab2:
             st.text("1. Put your CSV file.")
             st.text("2. Choose a specific column you'd like to focus on")
@@ -183,13 +183,10 @@ if uploaded_file is not None:
     
         with c1:
             max_font = st.number_input("Max Font Size", min_value = 1, value = 100)
-            image_height = st.number_input("Image height", value = 400)
             background = st.selectbox("Background color", ["white","black"])
  
         with c2:
             max_words = st.number_input("Max Word Count", min_value = 1, value = 250)
-            image_width = st.number_input("Image width", value = 500)
-            scale = st.number_input("Scale", value = 2)
             words_to_remove = st.text_input("Remove specific words. Separate words by semicolons (;)")
             filterwords = words_to_remove.split(';')
         
@@ -216,10 +213,7 @@ if uploaded_file is not None:
                     wordcloud = WordCloud(max_font_size = max_font,
                     max_words = max_words,
                     background_color=background,
-                    stopwords = filterwords,
-                    height = image_height,
-                    width = image_width,
-                    scale = scale).generate(fulltext)
+                    stopwords = filterwords).generate(fulltext)
                     freq = wordcloud.process_text(fulltext) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
                     df = pd.DataFrame(freq_list, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
@@ -240,13 +234,12 @@ if uploaded_file is not None:
                     wordcloud = WordCloud(max_font_size = max_font,
                     max_words = max_words,
                     background_color=background,
-                    stopwords = filterwords,
-                    height = image_height,
-                    width = image_width,
-                    scale = scale).generate(fullcolumn)
-                    img = wordcloud.to_image()
-
-                    st.image(img, use_container_width=True)
+                    stopwords = filterwords).generate(fullcolumn)
+                    freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
+                    freq_list= list(freq.items()) #creates list of key-value pairs as tuples
+                    df = pd.DataFrame(freq_list, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
+                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
+                    st.altair_chart(fig)
 
             elif extype.endswith(('.xls', '.xlsx')):
                 texts = readxls(uploaded_file)
@@ -260,13 +253,12 @@ if uploaded_file is not None:
                     wordcloud = WordCloud(max_font_size = max_font,
                     max_words = max_words,
                     background_color=background,
-                    stopwords = filterwords,
-                    height = image_height,
-                    width = image_width,
-                    scale = scale).generate(fullcolumn)
-                    img = wordcloud.to_image()
-
-                    st.image(img, use_container_width=True)       
+                    stopwords = filterwords).generate(fullcolumn)
+                    freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
+                    freq_list= list(freq.items()) #creates list of key-value pairs as tuples
+                    df = pd.DataFrame(freq_list, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
+                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
+                    st.altair_chart(fig)      
 
         except Exception as e: # this will print out the error, should help with debugging
             st.error(e)
