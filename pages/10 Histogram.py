@@ -182,11 +182,9 @@ if uploaded_file is not None:
         c1, c2 = st.columns(2)
     
         with c1:
-            max_font = st.number_input("Max Font Size", min_value = 1, value = 100)
-            background = st.selectbox("Background color", ["white","black"])
+            max_words = st.number_input("Max Word Count", min_value = 1, value = 250)
  
         with c2:
-            max_words = st.number_input("Max Word Count", min_value = 1, value = 250)
             words_to_remove = st.text_input("Remove specific words. Separate words by semicolons (;)")
             filterwords = words_to_remove.split(';')
         
@@ -216,9 +214,12 @@ if uploaded_file is not None:
                     stopwords = filterwords).generate(fulltext)
                     freq = wordcloud.process_text(fulltext) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
-                    df = pd.DataFrame(freq_list, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
+                    reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
+                    filt_freq = reordered[:max_words]
+                    df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)
+                    st.write(df.head())
 
 
 
@@ -237,7 +238,9 @@ if uploaded_file is not None:
                     stopwords = filterwords).generate(fullcolumn)
                     freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
-                    df = pd.DataFrame(freq_list, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
+                    reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
+                    filt_freq = reordered[:max_words]
+                    df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)
 
@@ -256,7 +259,9 @@ if uploaded_file is not None:
                     stopwords = filterwords).generate(fullcolumn)
                     freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
-                    df = pd.DataFrame(freq_list, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
+                    reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
+                    filt_freq = reordered[:max_words]
+                    df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)      
 
