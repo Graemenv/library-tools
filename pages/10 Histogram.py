@@ -208,9 +208,8 @@ if uploaded_file is not None:
                     fulltext = ' '.join(filtered)
                 
                 if st.button("Submit"):
-                    wordcloud = WordCloud(max_font_size = max_font,
+                    wordcloud = WordCloud(
                     max_words = max_words,
-                    background_color=background,
                     stopwords = filterwords).generate(fulltext)
                     freq = wordcloud.process_text(fulltext) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
@@ -219,7 +218,7 @@ if uploaded_file is not None:
                     df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)
-                    st.write(df.head())
+
 
 
 
@@ -232,9 +231,8 @@ if uploaded_file is not None:
                 fullcolumn = ' '.join(filtered)
 
                 if st.button("Submit"):
-                    wordcloud = WordCloud(max_font_size = max_font,
+                    wordcloud = WordCloud(
                     max_words = max_words,
-                    background_color=background,
                     stopwords = filterwords).generate(fullcolumn)
                     freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
@@ -253,9 +251,8 @@ if uploaded_file is not None:
                 fullcolumn = ' '.join(filtered)
 
                 if st.button("Submit"):
-                    wordcloud = WordCloud(max_font_size = max_font,
+                    wordcloud = WordCloud(
                     max_words = max_words,
-                    background_color=background,
                     stopwords = filterwords).generate(fullcolumn)
                     freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
                     freq_list= list(freq.items()) #creates list of key-value pairs as tuples
