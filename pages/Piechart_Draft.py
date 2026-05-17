@@ -46,13 +46,14 @@ with st.popover("🔗 Menu"):
     st.page_link("pages/8 Shifterator.py", label="Shifterator", icon="8️⃣")
     st.page_link("pages/9 WordCloud.py", label = "WordCloud", icon = "9️⃣")
     st.page_link("pages/10 Histogram.py", label = "Histogram", icon = "🔟")
+    st.page_link("pages/Piechart_Draft.py", label = "Pie Chart", icon = "11") #need icon
 
 
 with st.expander("Before you start", expanded = True):
      
         tab1, tab2, tab3, tab4 = st.tabs(["Prologue", "Steps", "Requirements", "Download"])
         with tab1:
-            st.write("The histogram uses a WordCloud method to calculate the frequency of specific variables in your document, such as keywords, years, or citations, by your choice of column. This provides the convenience of the WordCloud in a more straightforward and calculated presentation.")
+            st.write("The pie chart uses a WordCloud method to calculate the frequency of specific variables in your document, such as keywords, years, or citations, by your choice of column. This provides the convenience of the WordCloud in a more straightforward visual presentation.")
         with tab2:
             st.text("1. Put your CSV file.")
             st.text("2. Choose a specific column you'd like to focus on")
@@ -88,7 +89,7 @@ with st.expander("Before you start", expanded = True):
             st.subheader(':blue[WordCloud Download]', anchor=False)
         st.write("Right-click image and click \"Save-as\"")
     
-st.header("Histogram Visualization", anchor=False)
+st.header("Pie Chart Visualization", anchor=False)
 st.subheader('Put your file here...', anchor=False)
 #========unique id========
 @st.cache_resource(ttl=3600)
@@ -240,7 +241,7 @@ if uploaded_file is not None:
                     reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
                     filt_freq = reordered[:max_words]
                     df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
-                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
+                    fig = alt.Chart(df).mark_arc().encode(theta="Frequency", color="Word") #should display dataframe.
                     st.altair_chart(fig)
 
             elif extype.endswith(('.xls', '.xlsx')):
@@ -260,7 +261,7 @@ if uploaded_file is not None:
                     reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
                     filt_freq = reordered[:max_words]
                     df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
-                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
+                    fig = alt.Chart(df).mark_arc().encode(theta="Frequency", color="Word") #should display dataframe.
                     st.altair_chart(fig)      
 
         except Exception as e: # this will print out the error, should help with debugging

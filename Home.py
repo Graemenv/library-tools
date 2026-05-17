@@ -76,6 +76,10 @@ with mt1:
         st.markdown("![Histogram](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/sentiment.png)")
         if(st.button("Go to Histogram")):
             st.switch_page("pages/10 Histogram.py")
+    with col2.container(border=True):
+        st.markdown("![Pie Chart](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/sunburst.png)")
+        if(st.button("Go to Pie Chart")):
+            st.switch_page("pages/Piechart_Draft.py")
 
 with mt2:
     st.header("Before you start", anchor=False)
