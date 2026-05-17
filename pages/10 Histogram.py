@@ -56,7 +56,7 @@ with st.expander("Before you start", expanded = True):
         with tab2:
             st.text("1. Put your CSV file.")
             st.text("2. Choose a specific column you'd like to focus on")
-            st.text("3. Choose whether you'd like to see the frequencies of years or citations")
+            st.text("3. Adjust max word limit and select stopwords")
 
             
         with tab3:
@@ -263,8 +263,9 @@ if uploaded_file is not None:
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)      
 
-        except Exception as e: # this will print out the error, should help with debugging
-            st.error(e)
+        except Exception as e:
+            st.error("Please ensure that your file or settings are correct. If you think there is a mistake, feel free to reach out to us!", icon="🚨")
+            st.stop()
 
 
 
