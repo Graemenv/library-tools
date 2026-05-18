@@ -45,7 +45,7 @@ with st.popover("🔗 Menu"):
     st.page_link("pages/8 Shifterator.py", label="Shifterator", icon="8️⃣")
     st.page_link("pages/9 WordCloud.py", label = "WordCloud", icon = "9️⃣")
     st.page_link("pages/10 Histogram.py", label = "Histogram", icon = "🔟")
-    st.page_link("pages/Piechart_Draft.py", label = "Pie Chart", icon = "11") #need icon here
+    st.page_link("pages/11 Pie Chart.py", label = "Pie Chart", icon = "🔟") #need icon here
 
 
 with st.expander("Before you start", expanded = True):

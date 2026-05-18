@@ -79,7 +79,7 @@ with mt1:
     with col2.container(border=True):
         st.markdown("![Pie Chart](https://raw.githubusercontent.com/faizhalas/library-tools/refs/heads/main/images/sunburst.png)")
         if(st.button("Go to Pie Chart")):
-            st.switch_page("pages/Piechart_Draft.py")
+            st.switch_page("pages/11 Pie Chart.py")
 
 with mt2:
     st.header("Before you start", anchor=False)
