@@ -201,6 +201,7 @@ if uploaded_file is not None:
 
                     filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
                     fulltext = ' '.join(filtered)
+                    st.write("Please wait. This could take several minutes depending on the column.")
                     
                 except:
                     fulltext = read_txt(uploaded_file)
@@ -230,6 +231,7 @@ if uploaded_file is not None:
                 tokenized = word_tokenize(fullcolumn)
                 filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
                 fullcolumn = ' '.join(filtered)
+                st.write("Please wait. This could take several minutes depending on the column.")
 
                 if st.button("Submit"):
                     wordcloud = WordCloud(
@@ -250,6 +252,7 @@ if uploaded_file is not None:
                 tokenized = word_tokenize(fullcolumn)
                 filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
                 fullcolumn = ' '.join(filtered)
+                st.write("Please wait. This could take several minutes depending on the column.")
 
                 if st.button("Submit"):
                     wordcloud = WordCloud(
