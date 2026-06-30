@@ -13,6 +13,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 nltk.download('stopwords')
 nltk.download('punkt_tab')
+from collections import Counter
 
 # ===config===
 st.set_page_config(
@@ -210,6 +211,19 @@ if uploaded_file is not None:
                     fulltext = ' '.join(filtered)
                 
                 if st.button("Submit"):
+                    freq_count = Counter(filtered) #compiles like words with frequency
+                    filt_freq = freq_count.most_common(max_words)
+                    df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
+                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
+                    st.altair_chart(fig)
+
+
+
+
+
+                    
+                    
+                    '''
                     wordcloud = WordCloud(
                     max_words = max_words,
                     stopwords = filterwords).generate(fulltext)
@@ -220,6 +234,7 @@ if uploaded_file is not None:
                     df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)
+                    '''
 
 
 
