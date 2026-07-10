@@ -193,25 +193,34 @@ if uploaded_file is not None:
         try:
             extype = get_ext(uploaded_file)
 
-            if extype.endswith(".txt"):    
+            punctuation = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')',
+               '-', '_', '+', '=', '~', '`', ':', '{', '}',
+               '[', ']', '|', '<', '>', ';', ',', '.', '?', '/', "'s", "'", '"', "©"] #global punctuation list for filtering
+            if extype.endswith(".txt"):  
                 try:
                     texts = conv_txt(uploaded_file)
                     colcho = c1.selectbox("Choose Column", list(texts))
                     fulltext = " ".join(list(texts[colcho]))
                     tokenized = word_tokenize(fulltext)
-
-                    filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
+                    
+                    stop = set(stopwords.words("english"))
+                    filtered = [ word for word in tokenized if word.lower() not in stop]
                     fulltext = ' '.join(filtered)
-                    st.write("Please wait. This could take several minutes depending on the column.")
+                    filtered2 = [w for w in filtered if w not in punctuation]
+                    filtered3 = [w for w in filtered2 if w not in filterwords]
+                    st.write("Please wait. This could take up to a couple minutes for some columns.")
                     
                 except:
                     fulltext = read_txt(uploaded_file)
                     tokenized = word_tokenize(fulltext)
                     filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
-                    fulltext = ' '.join(filtered)
+                    filtered2 = [w for w in filtered if w not in punctuation]
+                    filtered3 = [w for w in filtered2 if w not in filterwords]
                 
+
+                #I'm trying this to see if I can make this run faster than wordcloud.
                 if st.button("Submit"):
-                    freq_count = Counter(filtered) #compiles like words with frequency
+                    freq_count = Counter(filtered3) #compiles like words with frequency
                     filt_freq = freq_count.most_common(max_words)
                     df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
@@ -223,18 +232,6 @@ if uploaded_file is not None:
 
                     
                     
-                    '''
-                    wordcloud = WordCloud(
-                    max_words = max_words,
-                    stopwords = filterwords).generate(fulltext)
-                    freq = wordcloud.process_text(fulltext) #returns dictionary of frequencies
-                    freq_list= list(freq.items()) #creates list of key-value pairs as tuples
-                    reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
-                    filt_freq = reordered[:max_words]
-                    df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
-                    fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
-                    st.altair_chart(fig)
-                    '''
 
 
 
@@ -244,18 +241,17 @@ if uploaded_file is not None:
                 colcho = c1.selectbox("Choose Column", list(texts))
                 fullcolumn = " ".join(list(texts[colcho]))
                 tokenized = word_tokenize(fullcolumn)
-                filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
+                
+                stop = set(stopwords.words("english"))
+                filtered = [ word for word in tokenized if word.lower() not in stop]
                 fullcolumn = ' '.join(filtered)
-                st.write("Please wait. This could take several minutes depending on the column.")
+                filtered2 = [w for w in filtered if w not in punctuation]
+                filtered3 = [w for w in filtered2 if w not in filterwords]
+                st.write("Please wait. This could take up to a couple minutes for some columns.")
 
                 if st.button("Submit"):
-                    wordcloud = WordCloud(
-                    max_words = max_words,
-                    stopwords = filterwords).generate(fullcolumn)
-                    freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
-                    freq_list= list(freq.items()) #creates list of key-value pairs as tuples
-                    reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
-                    filt_freq = reordered[:max_words]
+                    freq_count = Counter(filtered3) #compiles like words with frequency
+                    filt_freq = freq_count.most_common(max_words)
                     df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)
@@ -265,18 +261,17 @@ if uploaded_file is not None:
                 colcho = c1.selectbox("Choose Column", list(texts))
                 fullcolumn = " ".join(pd.Series(list(texts[colcho])).dropna().astype(str))
                 tokenized = word_tokenize(fullcolumn)
-                filtered = [word for word in tokenized if word.lower() not in stopwords.words('english')]
+
+                stop = set(stopwords.words("english"))
+                filtered = [ word for word in tokenized if word.lower() not in stop]
                 fullcolumn = ' '.join(filtered)
-                st.write("Please wait. This could take several minutes depending on the column.")
+                filtered2 = [w for w in filtered if w not in punctuation]
+                filtered3 = [w for w in filtered2 if w not in filterwords]
+                st.write("Please wait. This could take up to a couple minutes for some columns.")
 
                 if st.button("Submit"):
-                    wordcloud = WordCloud(
-                    max_words = max_words,
-                    stopwords = filterwords).generate(fullcolumn)
-                    freq = wordcloud.process_text(fullcolumn) #returns dictionary of frequencies
-                    freq_list= list(freq.items()) #creates list of key-value pairs as tuples
-                    reordered = sorted(freq_list, key=lambda x: x[1], reverse=True) #sorts by second value (ie frequency) of tuple.
-                    filt_freq = reordered[:max_words]
+                    freq_count = Counter(filtered3) #compiles like words with frequency
+                    filt_freq = freq_count.most_common(max_words)
                     df = pd.DataFrame(filt_freq, columns=["Word", "Frequency"]) #turns this into dataframe, pre-set columns
                     fig = alt.Chart(df).mark_bar().encode(x=alt.X("Frequency:Q"), y=alt.Y("Word:N")) #should display dataframe.
                     st.altair_chart(fig)      
